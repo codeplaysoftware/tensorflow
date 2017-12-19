@@ -588,6 +588,7 @@ class MatMulOp<CPUDevice, float, false> : public OpKernel {
     arm_compute::CLTensor arm_a, arm_b, arm_out;
     arm_compute::TensorShape shape_a{a.dim_size(!transpose_a_), a.dim_size(transpose_a_)},
       shape_b{b.dim_size(!transpose_b_), b.dim_size(transpose_b_)},
+      // This works because we are *always* the opposite of TF (row->column)
       shape_out{out->dim_size(1), out->dim_size(0)};
 
     arm_a.allocator()->init(arm_compute::TensorInfo(shape_a, 1, arm_compute::DataType::F32));
@@ -610,7 +611,7 @@ class MatMulOp<CPUDevice, float, false> : public OpKernel {
     arm_compute::Iterator out_it(&arm_out, out_win);
     auto eigen_out = out->flat<float>();
     arm_compute::execute_window_loop(out_win, [&] (arm_compute::Coordinates& c) {
-      eigen_out.data()[c.y() * out->shape().dim_size(1) + c.x()] =
+      eigen_out.data()[c.x() * out->shape().dim_size(0) + c.y()] =
           *reinterpret_cast<float*>(out_it.ptr());
     }, out_it);
     arm_out.unmap();
