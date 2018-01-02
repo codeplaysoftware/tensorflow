@@ -13,7 +13,7 @@ filegroup(
 cc_library(
     name = "acl_headers",
     srcs = glob(["**/*.h"]),
-    includes = [".", "include", "arm_compute", "support", "utils"],
+    includes = [".", "include", "arm_compute", "support"],
     visibility = ["//visibility:public"],
 )
 
