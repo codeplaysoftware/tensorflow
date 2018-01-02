@@ -34,7 +34,6 @@ limitations under the License.
 #include "arm_compute/core/Types.h"
 #include "arm_compute/runtime/CL/CLFunctions.h"
 #include "arm_compute/runtime/CL/CLScheduler.h"
-#include "utils/Utils.h"
 #endif  // ARM_COMPUTE_CL
 
 namespace tensorflow {
