@@ -95,9 +95,9 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
   acl_repository(
       name = "acl",
       urls = [
-          "https://github.com/ARM-software/ComputeLibrary/archive/6bc7b9046ae6ed4e4b574675e0c597b5d39a7423.tar.gz",
+          "https://github.com/ARM-software/ComputeLibrary/archive/6943bb00e79fe2ea4c127dc04b3440c5b0b29ce0.tar.gz",
       ],
-      strip_prefix = "ComputeLibrary-6bc7b9046ae6ed4e4b574675e0c597b5d39a7423",
+      strip_prefix = "ComputeLibrary-6943bb00e79fe2ea4c127dc04b3440c5b0b29ce0",
       build_file = str(Label("//third_party/acl:acl.BUILD")),
       repository = tf_repo_name,
   )
