@@ -17,6 +17,7 @@ limitations under the License.
 
 #define USE_EIGEN_TENSOR
 #define EIGEN_USE_THREADS
+#define TF_USE_SYCLDNN
 
 #include "tensorflow/core/kernels/conv_grad_ops.h"
 
@@ -48,7 +49,7 @@ limitations under the License.
 #include "tensorflow/core/platform/stream_executor.h"
 #endif  // GOOGLE_CUDA
 
-#ifdef TENSORFLOW_USE_SYCL
+#ifdef TF_USE_SYCLDNN
 #include "tensorflow/core/kernels/conv_ops_sycl.h"
 #endif  // TENSORFLOW_USE_SYCL
 
@@ -116,6 +117,22 @@ struct LaunchConv2DBackpropInputOp<CPUDevice, T> {
         out_backprop.tensor<T, 4>(), row_stride, col_stride);
   }
 };
+
+#ifdef TF_USE_SYCLEIGEN
+template <typename T>
+struct LaunchConv2DBackpropInputOp<SYCLDevice, T> {
+  void operator()(OpKernelContext* ctx, bool use_cudnn, bool cudnn_use_autotune,
+                  const Tensor& out_backprop, const Tensor& filter,
+                  int row_stride, int col_stride, const Padding& padding,
+                  Tensor* in_backprop, TensorFormat data_format) {
+    const SYCLDevice& d = ctx->eigen_device<SYCLDevice>();
+    functor::SpatialConvolutionBackwardInput<SYCLDevice, T>()(
+        d, in_backprop->tensor<T, 4>(), filter.tensor<T, 4>(),
+        out_backprop.tensor<T, 4>(), in_backprop->dim_size(1),
+        in_backprop->dim_size(2), row_stride, col_stride);
+  }
+};
+#endif  // TENSORFLOW_USE_SYCL
 
 #ifdef TENSORFLOW_USE_LIBXSMM
 template <typename Device, class T>
@@ -193,13 +210,16 @@ class Conv2DFastBackpropInputOp : public OpKernel {
     OP_REQUIRES_OK(context, context->GetAttr("data_format", &data_format));
     OP_REQUIRES(context, FormatFromString(data_format, &data_format_),
                 errors::InvalidArgument("Invalid data format"));
+    if(!std::is_same<Device, Eigen::SyclDevice>::value) {
     OP_REQUIRES(context, data_format_ == FORMAT_NHWC,
                 errors::InvalidArgument(
                     "Eigen Conv2DFastBackpropInputOp only supports NHWC."));
+    }
     OP_REQUIRES_OK(context, context->GetAttr("strides", &strides_));
     OP_REQUIRES(context, strides_.size() == 4,
                 errors::InvalidArgument("Sliding window strides field must "
                                         "specify 4 dimensions"));
+    if(!std::is_same<Device, Eigen::SyclDevice>::value) {
     OP_REQUIRES(
         context, (strides_[0] == 1 && strides_[3] == 1),
         errors::InvalidArgument("Current implementation does not yet support "
@@ -207,6 +227,7 @@ class Conv2DFastBackpropInputOp : public OpKernel {
     OP_REQUIRES(context, strides_[1] > 0 && strides_[2] > 0,
                 errors::InvalidArgument(
                     "Row and column strides should be larger than 0."));
+    }
     OP_REQUIRES_OK(context, context->GetAttr("padding", &padding_));
     OP_REQUIRES_OK(context, context->GetAttr("dilations", &dilations_));
     OP_REQUIRES(context, dilations_.size() == 4,
@@ -1123,7 +1144,8 @@ REGISTER_KERNEL_BUILDER(Name("Conv2DBackpropInput")
                               .HostMemory("input_sizes"), \
                           Conv2DSlowBackpropInputOp<SYCLDevice, T>);
 
-TF_CALL_SYCL_NUMBER_TYPES(REGISTER_SYCL_KERNELS);
+//TF_CALL_SYCL_NUMBER_TYPES(REGISTER_SYCL_KERNELS);
+TF_CALL_float(REGISTER_SYCL_KERNELS)
 #undef REGISTER_SYCL_KERNELS
 #endif  // TENSORFLOW_USE_SYCL
 }  // namespace tensorflow

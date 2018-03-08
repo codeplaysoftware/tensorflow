@@ -149,7 +149,7 @@ def GetTestConfigs():
     all the valid test configs as tuples of data_format and use_gpu.
   """
   test_configs = [("NHWC", False), ("NHWC", True)]
-  if test.is_gpu_available(cuda_only=True):
+  if test.is_gpu_available():
     # "NCHW" format is only supported on CUDA.
     test_configs += [("NCHW", True)]
   return test_configs
