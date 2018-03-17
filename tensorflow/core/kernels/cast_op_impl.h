@@ -161,6 +161,9 @@ std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
 GetSyclCastFromUint8(DataType dst_dtype);
 
 std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
+GetSyclCastFromInt8(DataType dst_dtype);
+
+std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
 GetSyclCastFromUint16(DataType dst_dtype);
 
 std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
@@ -171,6 +174,9 @@ GetSyclCastFromInt32(DataType dst_dtype);
 
 std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
 GetSyclCastFromInt64(DataType dst_dtype);
+
+std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
+GetSyclCastFromHalf(DataType dst_dtype);
 
 std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
 GetSyclCastFromFloat(DataType dst_dtype);

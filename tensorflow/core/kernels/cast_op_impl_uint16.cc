@@ -38,7 +38,7 @@ GetGpuCastFromUint16(DataType dst_dtype) {
 typedef Eigen::SyclDevice SYCLDevice;
 std::function<void(OpKernelContext*, const Tensor&, Tensor*)>
 GetSyclCastFromUint16(DataType dst_dtype) {
-  CURRY_TYPES3_NO_HALF(CAST_CASE, SYCLDevice, uint16);
+  CURRY_TYPES3(CAST_CASE, SYCLDevice, uint16);
   return nullptr;
 }
 #endif  // TENSORFLOW_USE_SYCL

@@ -209,6 +209,14 @@ class SyclCastOp : public CastOpBase {
     }
     if (src_dtype_ == DT_BOOL) {
       work_ = GetSyclCastFromBool(dst_dtype_);
+    } else if (src_dtype_ == DT_UINT8) {
+      work_ = GetSyclCastFromUint8(dst_dtype_);
+    } else if (src_dtype_ == DT_INT8) {
+      work_ = GetSyclCastFromInt8(dst_dtype_);
+    } else if (src_dtype_ == DT_UINT16) {
+      work_ = GetSyclCastFromUint16(dst_dtype_);
+    } else if (src_dtype_ == DT_INT16) {
+      work_ = GetSyclCastFromInt16(dst_dtype_);
     } else if (src_dtype_ == DT_INT32) {
       work_ = GetSyclCastFromInt32(dst_dtype_);
     } else if (src_dtype_ == DT_INT64) {
@@ -217,6 +225,8 @@ class SyclCastOp : public CastOpBase {
       work_ = GetSyclCastFromFloat(dst_dtype_);
     } else if (src_dtype_ == DT_DOUBLE) {
       work_ = GetSyclCastFromDouble(dst_dtype_);
+    } else if (src_dtype_ == DT_HALF) {
+      work_ = GetSyclCastFromHalf(dst_dtype_);
     }
 
     return work_ == nullptr ? Unimplemented() : Status::OK();
@@ -230,8 +240,13 @@ class SyclCastOp : public CastOpBase {
                               .Device(DEVICE_SYCL),            \
                           SyclCastOp)
 CURRY_TYPES2(REGISTER_CAST_SYCL, bool);
+CURRY_TYPES2(REGISTER_CAST_SYCL, uint8);
+CURRY_TYPES2(REGISTER_CAST_SYCL, int8);
+CURRY_TYPES2(REGISTER_CAST_SYCL, uint16);
+CURRY_TYPES2(REGISTER_CAST_SYCL, int16);
 CURRY_TYPES2(REGISTER_CAST_SYCL, int32);
 CURRY_TYPES2(REGISTER_CAST_SYCL, int64);
+CURRY_TYPES2(REGISTER_CAST_SYCL, Eigen::half);
 CURRY_TYPES2(REGISTER_CAST_SYCL, float);
 CURRY_TYPES2(REGISTER_CAST_SYCL, double);
 
