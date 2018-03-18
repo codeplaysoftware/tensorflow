@@ -206,7 +206,7 @@ class RunMetadataTest(test.TestCase):
       self.assertTrue(f in forward_op)
 
   def testLoopGPU(self):
-    if not test.is_gpu_available():
+    if not test.is_gpu_available(cuda_only=True):
       return
 
     ops.reset_default_graph()
