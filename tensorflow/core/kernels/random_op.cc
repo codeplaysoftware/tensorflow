@@ -678,19 +678,21 @@ void FillPhiloxRandom<SYCLDevice, Distribution>::operator()(
   const size_t group_size = device.getNearestPowerOfTwoWorkGroupSize();
   const size_t group_count = (size + group_size - 1) / group_size;
 
-  auto buffer = device.get_sycl_buffer(data);
+  if(group_count > 0) {
+    auto buffer = device.get_sycl_buffer(data);
 
-  device.sycl_queue().submit([&](sycl::handler& cgh) {
-    auto access = buffer.template get_access<sycl::access::mode::write>(cgh);
+    device.sycl_queue().submit([&](sycl::handler& cgh) {
+      auto access = buffer.template get_access<sycl::access::mode::write>(cgh);
 
-    FillPhiloxRandomKernel<Distribution,
-                           Distribution::kVariableSamplesPerOutput>
-        task(access, gen, dist);
-    cgh.parallel_for<class FillRandomKernel<Distribution>>(
-        sycl::nd_range<1>(sycl::range<1>(group_count * group_size),
-                          sycl::range<1>(group_size)),
-        task);
-  });
+      FillPhiloxRandomKernel<Distribution,
+                             Distribution::kVariableSamplesPerOutput>
+          task(access, gen, dist);
+      cgh.parallel_for<class FillRandomKernel<Distribution>>(
+          sycl::nd_range<1>(sycl::range<1>(group_count * group_size),
+                            sycl::range<1>(group_size)),
+          task);
+    });
+  }
 }
 
 }  // namespace functor
