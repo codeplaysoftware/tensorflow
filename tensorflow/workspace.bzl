@@ -95,9 +95,9 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
   acl_repository(
       name = "acl",
       urls = [
-          "https://github.com/ARM-software/ComputeLibrary/archive/6943bb00e79fe2ea4c127dc04b3440c5b0b29ce0.tar.gz",
+          "https://github.com/ARM-software/ComputeLibrary/archive/6bc7b9046ae6ed4e4b574675e0c597b5d39a7423.tar.gz",
       ],
-      strip_prefix = "ComputeLibrary-6943bb00e79fe2ea4c127dc04b3440c5b0b29ce0",
+      strip_prefix = "ComputeLibrary-6bc7b9046ae6ed4e4b574675e0c597b5d39a7423",
       build_file = str(Label("//third_party/acl:acl.BUILD")),
       repository = tf_repo_name,
   )
@@ -131,11 +131,11 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
   tf_http_archive(
       name = "eigen_archive",
       urls = [
-          "http://mirror.bazel.build/bitbucket.org/mehdi_goli/opencl/get/8f3d59bd29e1.tar.gz",
-          "https://bitbucket.org/mehdi_goli/opencl/get/8f3d59bd29e1.tar.gz",
+          "http://mirror.bazel.build/bitbucket.org/mehdi_goli/opencl/get/d241b80712dc.tar.gz",
+          "https://bitbucket.org/mehdi_goli/opencl/get/d260fad567a6.tar.gz",
       ],
-      sha256 = "1b65a2e48c92e04ddde55847deafd8d183b5d8673dff91bc37674b43be9c2564",
-      strip_prefix = "mehdi_goli-opencl-8f3d59bd29e1",
+      sha256 = "671298ce347e933f3717d6f51c38af1579c4b4c507798ac1eaa7179ed62709b9",
+      strip_prefix = "mehdi_goli-opencl-d260fad567a6",
       build_file = str(Label("//third_party:eigen.BUILD")),
   )
 
