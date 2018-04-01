@@ -35,9 +35,12 @@ build:cuda_clang --define=using_cuda=true --define=using_cuda_clang=true
 
 build:win-cuda --define=using_cuda=true --define=using_cuda_nvcc=true
 
-build:mkl --define=using_mkl=true
-
+# If you would like to use a local ACL instead of downloading, please set the
+# environment variable "TF_ACL_ROOT" every time before build.
 build:acl --define=using_acl=true
+build:acl -c opt
+build:acl --copt=-DARM_COMPUTE_CL
+build:acl --copt=-DARM_COMPUTE_NO_EXCEPTIONS
 
 build:sycl --crosstool_top=@local_config_sycl//crosstool:toolchain
 build:sycl --define=using_sycl=true --define=using_trisycl=false
