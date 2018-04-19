@@ -84,6 +84,8 @@ toolchain {
   unfiltered_cxx_flag: "-D__TIME__=\"redacted\""
   unfiltered_cxx_flag: "-no-canonical-prefixes"
 
+  compiler_flag: "-no-serial-memop"
+  compiler_flag: "-DDISABLE_SKINNY=1"
   compiler_flag: "-ffunction-sections"
   compiler_flag: "-fdata-sections"
   compiler_flag: "-fPIE"
