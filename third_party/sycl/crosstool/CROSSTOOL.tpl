@@ -84,9 +84,8 @@ toolchain {
   unfiltered_cxx_flag: "-D__TIME__=\"redacted\""
   unfiltered_cxx_flag: "-no-canonical-prefixes"
 
-  compiler_flag: "-U_FORTIFY_SOURCE"
-  compiler_flag: "-D_FORTIFY_SOURCE=1"
-  compiler_flag: "-fstack-protector"
+  compiler_flag: "-ffunction-sections"
+  compiler_flag: "-fdata-sections"
   compiler_flag: "-fPIE"
   compiler_flag: "-fno-omit-frame-pointer"
   compiler_flag: "-Wall"
@@ -112,7 +111,7 @@ toolchain {
   compilation_mode_flags {
     mode: OPT
     compiler_flag: "-g0"
-    compiler_flag: "-O3"
+    compiler_flag: "-O2"
     compiler_flag: "-DNDEBUG"
     compiler_flag: "-ffunction-sections"
     compiler_flag: "-fdata-sections"
