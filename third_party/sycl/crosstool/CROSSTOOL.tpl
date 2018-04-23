@@ -59,8 +59,6 @@ toolchain {
   cxx_flag: "-std=c++11"
   cxx_flag: "-isystem"
   cxx_flag: "%{PYTHON_INCLUDE_PATH}%"
-  cxx_flag: "-isystem"
-  cxx_flag: "%{COMPUTECPP_ROOT_DIR}%/include"
   cxx_flag: "-fsycl-ih-last"
   cxx_flag: "-sycl-driver"
   cxx_flag: "-Xclang"
