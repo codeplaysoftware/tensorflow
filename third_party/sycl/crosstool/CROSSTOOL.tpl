@@ -57,8 +57,6 @@ toolchain {
   cxx_builtin_include_directory: "%{COMPUTECPP_ROOT_DIR}%"
 
   cxx_flag: "-std=c++11"
-  cxx_flag: "-isystem"
-  cxx_flag: "%{PYTHON_INCLUDE_PATH}%"
   cxx_flag: "-fsycl-ih-last"
   cxx_flag: "-sycl-driver"
   cxx_flag: "-Xclang"
@@ -82,8 +80,6 @@ toolchain {
   unfiltered_cxx_flag: "-D__TIME__=\"redacted\""
   unfiltered_cxx_flag: "-no-canonical-prefixes"
 
-  compiler_flag: "-no-serial-memop"
-  compiler_flag: "-DDISABLE_SKINNY=1"
   compiler_flag: "-ffunction-sections"
   compiler_flag: "-fdata-sections"
   compiler_flag: "-fPIE"
@@ -155,7 +151,6 @@ toolchain {
 
   cxx_builtin_include_directory: "%{CROSS_COMPILER_PATH}%"
   cxx_builtin_include_directory: "%{COMPUTECPP_ROOT_DIR}%"
-  cxx_builtin_include_directory: "%{PYTHON_INCLUDE_PATH}%"
 
   compiler_flag: "-target"
   compiler_flag: "%{CROSS_TARGET}%"
@@ -163,8 +158,6 @@ toolchain {
   compiler_flag: "--sysroot=%{CROSS_COMPILER_PATH}%/%{CROSS_TARGET}%/libc"
 
   cxx_flag: "-std=c++11"
-  cxx_flag: "-isystem"
-  cxx_flag: "%{PYTHON_INCLUDE_PATH}%"
   cxx_flag: "-isystem"
   cxx_flag: "%{COMPUTECPP_ROOT_DIR}%/include"
   cxx_flag: "-fsycl-ih-last"
@@ -190,9 +183,8 @@ toolchain {
   unfiltered_cxx_flag: "-D__TIME__=\"redacted\""
   unfiltered_cxx_flag: "-no-canonical-prefixes"
 
-  compiler_flag: "-U_FORTIFY_SOURCE"
-  compiler_flag: "-D_FORTIFY_SOURCE=1"
-  compiler_flag: "-fstack-protector"
+  compiler_flag: "-ffunction-sections"
+  compiler_flag: "-fdata-sections"
   compiler_flag: "-fPIE"
   compiler_flag: "-fno-omit-frame-pointer"
   compiler_flag: "-Wall"
