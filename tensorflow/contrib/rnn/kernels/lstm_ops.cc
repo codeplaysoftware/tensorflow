@@ -99,7 +99,12 @@ void LSTMBlockCellFpropWithEigen(
   }
 
   // cs = ci .* i + f .* cs_prev
+#ifdef TENSORFLOW_USE_SYCL
+  cs.device(d) = cs_prev;
+  cs.device(d) = cs * f + i * ci;
+#else
   cs.device(d) = i * ci + f * cs_prev;
+#endif  // TENSORFLOW_USE_SYCL
 
   if (cell_clip > 0.0f) {
     cs.device(d) =
