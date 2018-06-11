@@ -127,7 +127,7 @@ struct LaunchConv2DBackpropFilterOp<SYCLDevice, T> {
         filter_backprop->dim_size(1), row_stride, col_stride);
   }
 };
-#endif  // TENSORFLOW_USE_SYCL
+#endif  // TF_USE_SYCLEIGEN
 
 #ifdef TENSORFLOW_USE_LIBXSMM
 template <typename Device, class T>
