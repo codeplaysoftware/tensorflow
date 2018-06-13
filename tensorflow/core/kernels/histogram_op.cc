@@ -107,14 +107,15 @@ struct HistogramFixedWidthFunctor<SYCLDevice, T, Tout> {
     }
 
 #if !defined(EIGEN_HAS_INDEX_LIST)
-    Eigen::DSizes<Eigen::Index, 1> sum_dim(0);
-    Eigen::DSizes<Eigen::Index, 2> values_size_by_one({values_size, 1});
-    Eigen::DSizes<Eigen::Index, 2> one_by_nbins({1, nbins});
+    Eigen::DSizes<Eigen::DenseIndex, 1> sum_dim(0);
+    Eigen::DSizes<Eigen::DenseIndex, 2> values_size_by_one({values_size, 1});
+    Eigen::DSizes<Eigen::DenseIndex, 2> one_by_nbins({1, nbins});
 #else
     Eigen::IndexList<Eigen::type2index<0>> sum_dim;
-    Eigen::IndexList<Eigen::Index, Eigen::type2index<1>> values_size_by_one;
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::type2index<1>>
+      values_size_by_one;
     values_size_by_one.set(0, values_size);
-    Eigen::IndexList<Eigen::type2index<1>, Eigen::Index> one_by_nbins;
+    Eigen::IndexList<Eigen::type2index<1>, Eigen::DenseIndex> one_by_nbins;
     one_by_nbins.set(1, nbins);
 #endif
 

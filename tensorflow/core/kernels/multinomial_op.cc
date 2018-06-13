@@ -158,22 +158,26 @@ struct MultinomialFunctor<SYCLDevice, T, OutputType> {
     auto eig_random = random_tensor.template tensor<InternalT, 3>();
 
 #if !defined(EIGEN_HAS_INDEX_LIST)
-    Eigen::DSizes<Eigen::Index, 1> max_dims(1);
-    Eigen::DSizes<Eigen::Index, 1> sum_dims(1);
+    Eigen::DSizes<Eigen::DenseIndex, 1> max_dims(1);
+    Eigen::DSizes<Eigen::DenseIndex, 1> sum_dims(1);
 
-    Eigen::DSizes<Eigen::Index, 2> zero_by_zero({0, 0});
-    Eigen::DSizes<Eigen::Index, 2> zero_by_one({0, 1});
-    Eigen::DSizes<Eigen::Index, 2> batch_by_one(batch_size, 1);
-    Eigen::DSizes<Eigen::Index, 2> one_by_classes({1, num_classes});
-    Eigen::DSizes<Eigen::Index, 2> batch_by_classes({batch_size, num_classes});
+    Eigen::DSizes<Eigen::DenseIndex, 2> zero_by_zero({0, 0});
+    Eigen::DSizes<Eigen::DenseIndex, 2> zero_by_one({0, 1});
+    Eigen::DSizes<Eigen::DenseIndex, 2> batch_by_one(batch_size, 1);
+    Eigen::DSizes<Eigen::DenseIndex, 2> one_by_classes({1, num_classes});
+    Eigen::DSizes<Eigen::DenseIndex, 2>
+      batch_by_classes({batch_size, num_classes});
 
-    Eigen::DSizes<Eigen::Index, 3> batch_by_one_by_one({batch_size, 1, 1});
-    Eigen::DSizes<Eigen::Index, 3> one_by_classes_by_one({1, num_classes, 1});
-    Eigen::DSizes<Eigen::Index, 3> one_by_one_by_samples({1, 1, num_samples});
-    Eigen::DSizes<Eigen::Index, 3> batch_by_classes_by_one({batch_size,
-                                                            num_classes, 1});
-    Eigen::DSizes<Eigen::Index, 3> batch_by_one_by_samples(batch_size, 1,
-                                                           num_samples);
+    Eigen::DSizes<Eigen::DenseIndex, 3>
+      batch_by_one_by_one({batch_size, 1, 1});
+    Eigen::DSizes<Eigen::DenseIndex, 3>
+      one_by_classes_by_one({1, num_classes, 1});
+    Eigen::DSizes<Eigen::DenseIndex, 3>
+      one_by_one_by_samples({1, 1, num_samples});
+    Eigen::DSizes<Eigen::DenseIndex, 3>
+      batch_by_classes_by_one({batch_size, num_classes, 1});
+    Eigen::DSizes<Eigen::DenseIndex, 3>
+      batch_by_one_by_samples(batch_size, 1, num_samples);
 #else
     Eigen::IndexList<Eigen::type2index<1> > max_dims;
 
@@ -185,35 +189,35 @@ struct MultinomialFunctor<SYCLDevice, T, OutputType> {
     Eigen::IndexList<Eigen::type2index<0>,
                      Eigen::type2index<1> > zero_by_one;
 
-    Eigen::IndexList<Eigen::Index, Eigen::type2index<1> > batch_by_one;
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::type2index<1> > batch_by_one;
     batch_by_one.set(0, batch_size);
 
-    Eigen::IndexList<Eigen::type2index<1>, Eigen::Index> one_by_classes;
+    Eigen::IndexList<Eigen::type2index<1>, Eigen::DenseIndex> one_by_classes;
     one_by_classes.set(1, num_classes);
 
-    Eigen::IndexList<Eigen::Index, Eigen::Index> batch_by_classes;
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::DenseIndex> batch_by_classes;
     batch_by_classes.set(0, batch_size);
     batch_by_classes.set(1, num_classes);
 
-    Eigen::IndexList<Eigen::Index, Eigen::type2index<1>,
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::type2index<1>,
                      Eigen::type2index<1> > batch_by_one_by_one;
     batch_by_one_by_one.set(0, batch_size);
 
-    Eigen::IndexList<Eigen::type2index<1>, Eigen::Index,
+    Eigen::IndexList<Eigen::type2index<1>, Eigen::DenseIndex,
                      Eigen::type2index<1> > one_by_classes_by_one;
     one_by_classes_by_one.set(1, num_classes);
 
     Eigen::IndexList<Eigen::type2index<1>, Eigen::type2index<1>,
-                     Eigen::Index> one_by_one_by_samples;
+                     Eigen::DenseIndex> one_by_one_by_samples;
     one_by_one_by_samples.set(2, num_samples);
 
-    Eigen::IndexList<Eigen::Index, Eigen::Index,
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::DenseIndex,
                      Eigen::type2index<1> > batch_by_classes_by_one;
     batch_by_classes_by_one.set(0, batch_size);
     batch_by_classes_by_one.set(1, num_classes);
 
-    Eigen::IndexList<Eigen::Index, Eigen::type2index<1>,
-                     Eigen::Index> batch_by_one_by_samples;
+    Eigen::IndexList<Eigen::DenseIndex, Eigen::type2index<1>,
+                     Eigen::DenseIndex> batch_by_one_by_samples;
     batch_by_one_by_samples.set(0, batch_size);
     batch_by_one_by_samples.set(2, num_samples);
 #endif
