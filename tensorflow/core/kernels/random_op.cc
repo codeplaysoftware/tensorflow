@@ -558,49 +558,36 @@ TF_CALL_int64(REGISTER_INT);
 
 namespace functor {
 
-using namespace cl;
-
 template <class Distribution, bool VariableSamplesPerOutput>
 struct FillPhiloxRandomKernel;
 
 template <class Distribution>
 struct FillPhiloxRandomKernel<Distribution, false> {
   typedef typename Distribution::ResultElementType T;
-  using write_accessor = sycl::accessor<uint8_t, 1, sycl::access::mode::write,
-                                        sycl::access::target::global_buffer>;
+  using write_accessor =
+    cl::sycl::accessor<uint8_t, 1, cl::sycl::access::mode::write,
+                       cl::sycl::access::target::global_buffer>;
 
   FillPhiloxRandomKernel(write_accessor& data, random::PhiloxRandom& gen,
                          Distribution& dist)
       : data_(data), gen_(gen), dist_(dist) {}
 
-  void operator()(sycl::nd_item<1> item) {
-    const size_t kGroupSize = Distribution::kResultElementCount;
+  void operator()(cl::sycl::nd_item<1> item) {
+    constexpr size_t kGroupSize = Distribution::kResultElementCount;
 
     const size_t item_id = item.get_global(0);
-    const size_t total_item_count = item.get_global_range(0);
-    size_t offset = item_id * kGroupSize;
+    const size_t offset = item_id * kGroupSize;
     gen_.Skip(item_id);
 
     const size_t size = data_.get_size() / sizeof(T);
     T* data = ConvertToActualTypeSycl(T, data_);
 
-    while (offset + kGroupSize <= size) {
-      const typename Distribution::ResultType samples = dist_(&gen_);
-      for (size_t i = 0; i < kGroupSize; ++i) {
-        data[offset + i] = samples[i];
-      }
-
-      offset += (total_item_count - 1) * kGroupSize;
-      gen_.Skip(total_item_count - 1);
-    }
-
     const typename Distribution::ResultType samples = dist_(&gen_);
     for (size_t i = 0; i < kGroupSize; ++i) {
-      if (offset >= size) {
+      if (offset + i >= size) {
         return;
       }
-      data[offset] = samples[i];
-      ++offset;
+      data[offset + i] = samples[i];
     }
   }
 
@@ -613,50 +600,38 @@ struct FillPhiloxRandomKernel<Distribution, false> {
 template <class Distribution>
 struct FillPhiloxRandomKernel<Distribution, true> {
   typedef typename Distribution::ResultElementType T;
-  using write_accessor = sycl::accessor<uint8_t, 1, sycl::access::mode::write,
-                                        sycl::access::target::global_buffer>;
+  using write_accessor =
+    cl::sycl::accessor<uint8_t, 1, cl::sycl::access::mode::write,
+                       cl::sycl::access::target::global_buffer>;
 
   FillPhiloxRandomKernel(write_accessor& data, random::PhiloxRandom& gen,
                          Distribution& dist)
       : data_(data), gen_(gen), dist_(dist) {}
 
-  void operator()(sycl::nd_item<1> item) {
+  void operator()(cl::sycl::nd_item<1> item) {
     using random::PhiloxRandom;
     using random::SingleSampleAdapter;
 
-    const size_t kReservedSamplesPerOutput = 256;
-    const size_t kGroupSize = Distribution::kResultElementCount;
-    const size_t kGeneratorSkipPerOutputGroup =
-        kGroupSize * kReservedSamplesPerOutput /
-        PhiloxRandom::kResultElementCount;
+    constexpr size_t kReservedSamplesPerOutput = 256;
+    constexpr size_t kGroupSize = Distribution::kResultElementCount;
+    constexpr size_t kGeneratorSkipPerOutputGroup = kGroupSize *
+      kReservedSamplesPerOutput / PhiloxRandom::kResultElementCount;
 
     const size_t item_id = item.get_global(0);
-    const size_t total_item_count = item.get_global_range(0);
-    size_t group_index = item_id;
-    size_t offset = group_index * kGroupSize;
+    const size_t offset = item_id * kGroupSize;
 
-    T* data = ConvertToActualTypeSycl(T, data_);
+    gen_.Skip(item_id * kGeneratorSkipPerOutputGroup);
+    SingleSampleAdapter<PhiloxRandom> single_samples(&gen_);
+
     const size_t size = data_.get_size() / sizeof(T);
+    T* data = ConvertToActualTypeSycl(T, data_);
 
-    while (offset < size) {
-      // Since each output takes a variable number of samples, we need to
-      // realign the generator to the beginning for the current output group
-      PhiloxRandom gen = gen_;
-      gen.Skip(group_index * kGeneratorSkipPerOutputGroup);
-      SingleSampleAdapter<PhiloxRandom> single_samples(&gen);
-
-      const typename Distribution::ResultType samples = dist_(&single_samples);
-
-      for (size_t i = 0; i < kGroupSize; ++i) {
-        if (offset >= size) {
-          return;
-        }
-        data[offset] = samples[i];
-        ++offset;
+    const typename Distribution::ResultType samples = dist_(&single_samples);
+    for (size_t i = 0; i < kGroupSize; ++i) {
+      if (offset + i >= size) {
+        return;
       }
-
-      offset += (total_item_count - 1) * kGroupSize;
-      group_index += total_item_count;
+      data[offset + i] = samples[i];
     }
   }
 
@@ -675,22 +650,24 @@ void FillPhiloxRandom<SYCLDevice, Distribution>::operator()(
     OpKernelContext* context, const SYCLDevice& device,
     random::PhiloxRandom gen, typename Distribution::ResultElementType* data,
     int64 size, Distribution dist) {
+  const size_t nb_items = (size + Distribution::kResultElementCount - 1) /
+                           Distribution::kResultElementCount;
   const size_t group_size = device.getNearestPowerOfTwoWorkGroupSize();
-  const size_t group_count = (size + group_size - 1) / group_size;
+  const size_t group_count = (nb_items + group_size - 1) / group_size;
 
-  if(group_count > 0) {
+  if (group_count > 0) {
     auto buffer = device.get_sycl_buffer(data);
 
-    device.sycl_queue().submit([&](sycl::handler& cgh) {
-      auto access = buffer.template get_access<sycl::access::mode::write>(cgh);
+    device.sycl_queue().submit([&](cl::sycl::handler& cgh) {
+      auto access =
+        buffer.template get_access<cl::sycl::access::mode::write>(cgh);
+      cl::sycl::nd_range<1> rng(cl::sycl::range<1>(group_count * group_size),
+                                cl::sycl::range<1>(group_size));
 
       FillPhiloxRandomKernel<Distribution,
                              Distribution::kVariableSamplesPerOutput>
-          task(access, gen, dist);
-      cgh.parallel_for<class FillRandomKernel<Distribution>>(
-          sycl::nd_range<1>(sycl::range<1>(group_count * group_size),
-                            sycl::range<1>(group_size)),
-          task);
+        task(access, gen, dist);
+      cgh.parallel_for<class FillRandomKernel<Distribution>>(rng, task);
     });
   }
 }
