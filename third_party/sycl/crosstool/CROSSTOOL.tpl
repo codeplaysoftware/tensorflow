@@ -82,7 +82,7 @@ toolchain {
 
   compiler_flag: "-ffunction-sections"
   compiler_flag: "-fdata-sections"
-  compiler_flag: "-fPIE"
+  compiler_flag: "-fPIC"
   compiler_flag: "-fno-omit-frame-pointer"
   compiler_flag: "-Wall"
 
@@ -184,7 +184,7 @@ toolchain {
 
   compiler_flag: "-ffunction-sections"
   compiler_flag: "-fdata-sections"
-  compiler_flag: "-fPIE"
+  compiler_flag: "-fPIC"
   compiler_flag: "-fno-omit-frame-pointer"
   compiler_flag: "-Wall"
 
