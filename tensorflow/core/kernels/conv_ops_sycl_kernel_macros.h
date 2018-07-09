@@ -33,7 +33,5 @@
 #else
 #define SNN_PRAGMA_UNROLL
 #endif  // __SYCL_DEVICE_ONLY__
-// Provide a barrier call to synchronize threads on ARM devices.
-#define SNN_SYNC_THREADS
 
 #endif  // TENSORFLOW_KERNELS_CONV_OPS_KERNEL_MACROS_H_
