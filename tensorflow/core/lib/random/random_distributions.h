@@ -580,8 +580,7 @@ PHILOX_DEVICE_INLINE float Uint32ToFloat(uint32 x) {
   const uint32 val = (exp << 23) | man;
 
   // Assumes that endian-ness is same for float and uint32.
-  float result;
-  memcpy(&result, &val, sizeof(val));
+  auto result = reinterpret_cast<const float&>(val);
   return result - 1.0f;
 }
 
@@ -599,8 +598,7 @@ PHILOX_DEVICE_INLINE double Uint64ToDouble(uint32 x0, uint32 x1) {
   const uint64 exp = static_cast<uint64>(1023);
   const uint64 val = (exp << 52) | man;
   // Assumes that endian-ness is same for double and uint64.
-  double result;
-  memcpy(&result, &val, sizeof(val));
+  auto result = reinterpret_cast<const double&>(val);
   return result - 1.0;
 }
 
