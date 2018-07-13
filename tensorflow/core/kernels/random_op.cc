@@ -577,17 +577,15 @@ struct FillPhiloxRandomKernel<Distribution, false> {
 
     const size_t item_id = item.get_global(0);
     const size_t offset = item_id * kGroupSize;
-    gen_.Skip(item_id);
 
     const size_t size = data_.get_size() / sizeof(T);
-    T* data = ConvertToActualTypeSycl(T, data_);
+    T* data = ConvertToActualTypeSycl(T, data_) + offset;
 
-    const typename Distribution::ResultType samples = dist_(&gen_);
-    for (size_t i = 0; i < kGroupSize; ++i) {
-      if (offset + i >= size) {
-        return;
-      }
-      data[offset + i] = samples[i];
+    gen_.Skip(item_id);
+    auto samples = dist_(&gen_);
+    const size_t nb_fill = std::min(kGroupSize, size - offset);
+    for (int i = 0; i < nb_fill; ++i) {
+      data[i] = samples[i];
     }
   }
 
@@ -620,18 +618,15 @@ struct FillPhiloxRandomKernel<Distribution, true> {
     const size_t item_id = item.get_global(0);
     const size_t offset = item_id * kGroupSize;
 
+    const size_t size = data_.get_size() / sizeof(T);
+    T* data = ConvertToActualTypeSycl(T, data_) + offset;
+
     gen_.Skip(item_id * kGeneratorSkipPerOutputGroup);
     SingleSampleAdapter<PhiloxRandom> single_samples(&gen_);
-
-    const size_t size = data_.get_size() / sizeof(T);
-    T* data = ConvertToActualTypeSycl(T, data_);
-
-    const typename Distribution::ResultType samples = dist_(&single_samples);
-    for (size_t i = 0; i < kGroupSize; ++i) {
-      if (offset + i >= size) {
-        return;
-      }
-      data[offset + i] = samples[i];
+    auto samples = dist_(&single_samples);
+    const size_t nb_fill = std::min(kGroupSize, size - offset);
+    for (int i = 0; i < nb_fill; ++i) {
+      data[i] = samples[i];
     }
   }
 
@@ -650,26 +645,27 @@ void FillPhiloxRandom<SYCLDevice, Distribution>::operator()(
     OpKernelContext* context, const SYCLDevice& device,
     random::PhiloxRandom gen, typename Distribution::ResultElementType* data,
     int64 size, Distribution dist) {
+  if (size == 0)
+    return;
+
   const size_t nb_items = (size + Distribution::kResultElementCount - 1) /
                            Distribution::kResultElementCount;
   const size_t group_size = device.getNearestPowerOfTwoWorkGroupSize();
   const size_t group_count = (nb_items + group_size - 1) / group_size;
 
-  if (group_count > 0) {
-    auto buffer = device.get_sycl_buffer(data);
+  auto buffer = device.get_sycl_buffer(data);
 
-    device.sycl_queue().submit([&](cl::sycl::handler& cgh) {
-      auto access =
-        buffer.template get_access<cl::sycl::access::mode::write>(cgh);
-      cl::sycl::nd_range<1> rng(cl::sycl::range<1>(group_count * group_size),
-                                cl::sycl::range<1>(group_size));
+  device.sycl_queue().submit([&](cl::sycl::handler& cgh) {
+    auto access =
+      buffer.template get_access<cl::sycl::access::mode::write>(cgh);
+    cl::sycl::nd_range<1> nd_rng(cl::sycl::range<1>(group_count * group_size),
+                                 cl::sycl::range<1>(group_size));
 
-      FillPhiloxRandomKernel<Distribution,
-                             Distribution::kVariableSamplesPerOutput>
-        task(access, gen, dist);
-      cgh.parallel_for<class FillRandomKernel<Distribution>>(rng, task);
-    });
-  }
+    FillPhiloxRandomKernel<Distribution,
+                           Distribution::kVariableSamplesPerOutput>
+      task(access, gen, dist);
+    cgh.parallel_for<class FillRandomKernel<Distribution>>(nd_rng, task);
+  });
 }
 
 }  // namespace functor
