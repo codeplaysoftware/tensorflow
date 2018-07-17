@@ -318,8 +318,8 @@ struct DepthwiseConv2D<T, ConvType::FilterBackprop> {
 
   inline TF_ATTRIBUTE_ALWAYS_INLINE void operator()(
       cl::sycl::nd_item<2> item) noexcept {
-    const Index local_idx = item.get_global(0);
-    const Index fil_idx = item.get_global(1);
+    const Index local_idx = item.get_global_id(0);
+    const Index fil_idx = item.get_global_id(1);
     if (local_idx < n_group_items_ && fil_idx < n_filter_elems_) {
       const T* input_data = ConvertToActualTypeSycl(T, input_accessor_);
       const T* kernel_data = ConvertToActualTypeSycl(T, kernel_accessor_);

@@ -576,7 +576,7 @@ struct FillPhiloxRandomKernel<Distribution, false> {
   void operator()(sycl::nd_item<1> item) {
     const size_t kGroupSize = Distribution::kResultElementCount;
 
-    const size_t item_id = item.get_global(0);
+    const size_t item_id = item.get_global_id(0);
     const size_t total_item_count = item.get_global_range(0);
     size_t offset = item_id * kGroupSize;
     gen_.Skip(item_id);
@@ -630,7 +630,7 @@ struct FillPhiloxRandomKernel<Distribution, true> {
         kGroupSize * kReservedSamplesPerOutput /
         PhiloxRandom::kResultElementCount;
 
-    const size_t item_id = item.get_global(0);
+    const size_t item_id = item.get_global_id(0);
     const size_t total_item_count = item.get_global_range(0);
     size_t group_index = item_id;
     size_t offset = group_index * kGroupSize;
