@@ -557,75 +557,56 @@ TF_CALL_int64(REGISTER_INT);
 #ifdef TENSORFLOW_USE_SYCL
 
 namespace functor {
-
-template <class Distribution, bool VariableSamplesPerOutput>
-struct FillPhiloxRandomKernel;
-
-template <class Distribution>
-struct FillPhiloxRandomKernel<Distribution, false> {
-  typedef typename Distribution::ResultElementType T;
-  using write_accessor =
-    cl::sycl::accessor<uint8_t, 1, cl::sycl::access::mode::write,
-                       cl::sycl::access::target::global_buffer>;
-
-  FillPhiloxRandomKernel(write_accessor& data, random::PhiloxRandom& gen,
-                         Distribution& dist)
-      : data_(data), gen_(gen), dist_(dist) {}
-
-  void operator()(cl::sycl::nd_item<1> item) {
-    constexpr size_t kGroupSize = Distribution::kResultElementCount;
-
-    const size_t item_id = item.get_global(0);
-    const size_t offset = item_id * kGroupSize;
-
-    const size_t size = data_.get_size() / sizeof(T);
-    T* data = ConvertToActualTypeSycl(T, data_) + offset;
-
-    gen_.Skip(item_id);
-    auto samples = dist_(&gen_);
-    const size_t nb_fill = std::min(kGroupSize, size - offset);
-    for (int i = 0; i < nb_fill; ++i) {
-      data[i] = samples[i];
-    }
+namespace {
+template <class T, class Distribution, size_t kGeneratorSkipPerOutputGroup>
+struct GenerateSamples {
+  typename Distribution::ResultType operator()(const size_t item_id,
+                                               Distribution& dist,
+                                               random::PhiloxRandom& gen) {
+    gen.Skip(item_id * kGeneratorSkipPerOutputGroup);
+    random::SingleSampleAdapter<PhiloxRandom> single_samples(&gen);
+    return dist(&single_samples);
   }
-
- private:
-  write_accessor data_;
-  random::PhiloxRandom gen_;
-  Distribution dist_;
 };
 
-template <class Distribution>
-struct FillPhiloxRandomKernel<Distribution, true> {
-  typedef typename Distribution::ResultElementType T;
+template <class T, class Distribution>
+struct GenerateSamples<T, Distribution, 1> {
+  typename Distribution::ResultType operator()(const size_t item_id,
+                                               Distribution& dist,
+                                               random::PhiloxRandom& gen) {
+    gen.Skip(item_id);
+    return dist(&gen);
+  }
+};
+}  // namespace
+
+template <class Distribution, bool VariableSamplesPerOutput>
+struct FillPhiloxRandomKernel {
+  using T = typename Distribution::ResultElementType;
   using write_accessor =
     cl::sycl::accessor<uint8_t, 1, cl::sycl::access::mode::write,
                        cl::sycl::access::target::global_buffer>;
+
+  static constexpr size_t kReservedSamplesPerOutput =
+    FillPhiloxRandomTask<Distribution, true>::kReservedSamplesPerOutput;
+  static constexpr size_t kGroupSize = Distribution::kResultElementCount;
+  static constexpr size_t kGeneratorSkipPerOutputGroup = kGroupSize *
+    kReservedSamplesPerOutput / PhiloxRandom::kResultElementCount;
 
   FillPhiloxRandomKernel(write_accessor& data, random::PhiloxRandom& gen,
                          Distribution& dist)
       : data_(data), gen_(gen), dist_(dist) {}
 
   void operator()(cl::sycl::nd_item<1> item) {
-    using random::PhiloxRandom;
-    using random::SingleSampleAdapter;
-
-    constexpr size_t kReservedSamplesPerOutput = 256;
-    constexpr size_t kGroupSize = Distribution::kResultElementCount;
-    constexpr size_t kGeneratorSkipPerOutputGroup = kGroupSize *
-      kReservedSamplesPerOutput / PhiloxRandom::kResultElementCount;
-
     const size_t item_id = item.get_global(0);
     const size_t offset = item_id * kGroupSize;
 
     const size_t size = data_.get_size() / sizeof(T);
     T* data = ConvertToActualTypeSycl(T, data_) + offset;
 
-    gen_.Skip(item_id * kGeneratorSkipPerOutputGroup);
-    SingleSampleAdapter<PhiloxRandom> single_samples(&gen_);
-    auto samples = dist_(&single_samples);
+    auto samples = generate_samples_(item_id, dist_, gen_);
     const size_t nb_fill = std::min(kGroupSize, size - offset);
-    for (int i = 0; i < nb_fill; ++i) {
+    for (size_t i = 0; i < nb_fill; ++i) {
       data[i] = samples[i];
     }
   }
@@ -634,6 +615,9 @@ struct FillPhiloxRandomKernel<Distribution, true> {
   write_accessor data_;
   random::PhiloxRandom gen_;
   Distribution dist_;
+  GenerateSamples<T, Distribution, VariableSamplesPerOutput
+                                     ? kGeneratorSkipPerOutputGroup
+                                     : 1> generate_samples_;
 };
 
 template <typename T>
