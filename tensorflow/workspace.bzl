@@ -152,7 +152,9 @@ def tf_workspace(path_prefix="", tf_repo_name=""):
       name = "eigen_archive",
       urls = [
           "https://mirror.bazel.build/gitlab.com/libeigen/eigen/-/archive/deb93ed1bf359ac99923e3a2b90a2920b1101290/eigen.tar.gz",
-          "https://gitlab.com/libeigen/eigen/-/archive/deb93ed1bf359ac99923e3a2b90a2920b1101290/eigen.tar.gz",
+          # TODO(codeplay): Enable gitlab Eigen once 406 error is fixed
+          #"https://gitlab.com/libeigen/eigen/-/archive/deb93ed1bf359ac99923e3a2b90a2920b1101290/eigen.tar.gz",
+          "https://github.com/RBiessy/eigen/archive/deb93ed1bf359ac99923e3a2b90a2920b1101290/eigen.tar.gz",
       ],
       sha256 = "62d1581a740caa74f1bf9db8552abebcd772bf12be035e9422bd59bfb0a2ba8e",
       strip_prefix = "eigen-deb93ed1bf359ac99923e3a2b90a2920b1101290",
